@@ -11,7 +11,6 @@ st.write(
 "Simplifica tu proceso de lectura y análisis con nuestra app: resume, extrae palabras clave y organiza la información en cuadros conceptuales, todo en un solo clic."
 )
 # Instalar dependencias
-!pip install streamlit transformers keybert spacy pyngrok
 !python -m spacy download es_core_news_sm
 
 # Código de la IA
