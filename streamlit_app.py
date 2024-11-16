@@ -10,10 +10,6 @@ st.write(
 
 "Simplifica tu proceso de lectura y análisis con nuestra app: resume, extrae palabras clave y organiza la información en cuadros conceptuales, todo en un solo clic."
 )
-/mi-app
-    ├── app.py          # Código de la aplicación Streamlit
-    ├── requirements.txt # Dependencias necesarias
-    └── modelo.py        # (Si tienes código específico para tu modelo de IA)
 import streamlit as st
 from modelo import generar_resumen, generar_cuadro_conceptual, identificar_palabras_clave
 
