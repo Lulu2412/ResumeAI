@@ -10,51 +10,67 @@ st.write(
 
 "Simplifica tu proceso de lectura y análisis con nuestra app: resume, extrae palabras clave y organiza la información en cuadros conceptuales, todo en un solo clic."
 )
-# Código de la IA
+/mi-app
+    ├── app.py          # Código de la aplicación Streamlit
+    ├── requirements.txt # Dependencias necesarias
+    └── modelo.py        # (Si tienes código específico para tu modelo de IA)
 import streamlit as st
+from modelo import generar_resumen, generar_cuadro_conceptual, identificar_palabras_clave
+
+# Título de la aplicación
+st.title("Aplicación de Resúmenes, Cuadros Conceptuales y Palabras Clave")
+
+# Descripción
+st.write("Este es un asistente interactivo que te ayudará a generar resúmenes automáticos, cuadros conceptuales y a identificar palabras clave de tus textos.")
+
+# Entrada de texto
+texto_entrada = st.text_area("Introduce el texto para analizar", height=200)
+
+# Botones de acción
+if st.button("Generar Resumen"):
+    if texto_entrada:
+        resumen = generar_resumen(texto_entrada)
+        st.subheader("Resumen:")
+        st.write(resumen)
+    else:
+        st.error("Por favor, ingresa un texto para resumir.")
+
+if st.button("Generar Cuadro Conceptual"):
+    if texto_entrada:
+        cuadro_conceptual = generar_cuadro_conceptual(texto_entrada)
+        st.subheader("Cuadro Conceptual:")
+        st.write(cuadro_conceptual)
+    else:
+        st.error("Por favor, ingresa un texto para generar el cuadro conceptual.")
+
+if st.button("Identificar Palabras Clave"):
+    if texto_entrada:
+        palabras_clave = identificar_palabras_clave(texto_entrada)
+        st.subheader("Palabras Clave:")
+        st.write(", ".join(palabras_clave))
+    else:
+        st.error("Por favor, ingresa un texto para identificar las palabras clave.")
+# Modelo de IA: Generación de Resúmenes, Cuadros Conceptuales y Palabras Clave
+
 from transformers import pipeline
-from keybert import KeyBERT
-import spacy
 
-def cargar_modelos():
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-    kw_model = KeyBERT()
-    nlp = spacy.load("es_core_news_sm")
-    return summarizer, kw_model, nlp
+# Cargar los modelos para resumen, cuadro conceptual y extracción de palabras clave
+resumen_modelo = pipeline("summarization")
+keywords_modelo = pipeline("ner")
 
-def generar_resumen(texto, summarizer):
-    resumen = summarizer(texto, max_length=150, min_length=30, do_sample=False)
+def generar_resumen(texto):
+    resumen = resumen_modelo(texto)
     return resumen[0]['summary_text']
 
-def extraer_palabras_clave(texto, kw_model):
-    palabras_clave = kw_model.extract_keywords(
-        texto, keyphrase_ngram_range=(1, 2), stop_words='spanish'
-    )
-    return [kw[0] for kw in palabras_clave]
+def generar_cuadro_conceptual(texto):
+    # Aquí puedes agregar tu lógica para generar cuadros conceptuales.
+    # Este es solo un ejemplo de cómo podrías hacerlo.
+    return f"Cuadro conceptual generado para: {texto[:50]}..."  # Lógica de ejemplo
 
-def generar_cuadro_conceptual(texto, nlp):
-    relaciones = []
-    doc = nlp(texto)
-    for token in doc:
-        if token.dep_ in ["nsubj", "dobj"]:
-            relaciones.append(f"{token.text} ({token.dep_}) -> {token.head.text}")
-    return relaciones
-
-def main():
-    st.title("Asistente de Escritura Inteligente")
-    summarizer, kw_model, nlp = cargar_modelos()
-    texto_largo = st.text_area("Introduce el texto (máximo 5000 palabras)", height=300)
-    opcion = st.selectbox("Selecciona la tarea:", ["Resumen", "Palabras clave", "Cuadro conceptual"])
-    if st.button("Procesar"):
-        if opcion == "Resumen":
-            resultado = generar_resumen(texto_largo, summarizer)
-            st.subheader("Resumen")
-            st.write(resultado)
-        elif opcion == "Palabras clave":
-            resultado = extraer_palabras_clave(texto_largo, kw_model)
-            st.subheader("Palabras clave")
-            st.write(resultado)
-        elif opcion == "Cuadro conceptual":
-            resultado = generar_cuadro_conceptual(texto_largo, nlp)
-            st.subheader("Cuadro conceptual")
-            st.write(resultado)
+def identificar_palabras_clave(texto):
+    # Aquí usamos el modelo NER para extraer entidades como ejemplo de palabras clave
+    palabras_clave = [entidad['word'] for entidad in keywords_modelo(texto)]
+    return palabras_clave
+streamlit
+transformers
+torch
