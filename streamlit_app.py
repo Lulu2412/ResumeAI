@@ -10,9 +10,6 @@ st.write(
 
 "Simplifica tu proceso de lectura y análisis con nuestra app: resume, extrae palabras clave y organiza la información en cuadros conceptuales, todo en un solo clic."
 )
-# Instalar dependencias
-!python -m spacy download es_core_news_sm
-
 # Código de la IA
 import streamlit as st
 from transformers import pipeline
