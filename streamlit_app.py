@@ -2,55 +2,63 @@ import streamlit as st
 from openai import OpenAI
 
 # Show title and description.
-st.title("💬 Chatbot")
+st.title("💬 ResumeAI")
 st.write(
-    "This is a simple chatbot that uses OpenAI's GPT-3.5 model to generate responses. "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
+    "Esta aplicación te permite generar resúmenes automáticos de textos, extraer las ideas clave y visualizar los conceptos más importantes de manera clara y sencilla."
+
+"Con esta herramienta, podrás transformar textos largos en resúmenes concisos, identificar las palabras clave y crear cuadros conceptuales para una comprensión más profunda."
+
+"Simplifica tu proceso de lectura y análisis con nuestra app: resume, extrae palabras clave y organiza la información en cuadros conceptuales, todo en un solo clic."
 )
+# Instalar dependencias
+!pip install streamlit transformers keybert spacy pyngrok
+!python -m spacy download es_core_news_sm
 
-# Ask user for their OpenAI API key via `st.text_input`.
-# Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
-# via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
-if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
-else:
+# Código de la IA
+import streamlit as st
+from transformers import pipeline
+from keybert import KeyBERT
+import spacy
 
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
+def cargar_modelos():
+    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+    kw_model = KeyBERT()
+    nlp = spacy.load("es_core_news_sm")
+    return summarizer, kw_model, nlp
 
-    # Create a session state variable to store the chat messages. This ensures that the
-    # messages persist across reruns.
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+def generar_resumen(texto, summarizer):
+    resumen = summarizer(texto, max_length=150, min_length=30, do_sample=False)
+    return resumen[0]['summary_text']
 
-    # Display the existing chat messages via `st.chat_message`.
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+def extraer_palabras_clave(texto, kw_model):
+    palabras_clave = kw_model.extract_keywords(
+        texto, keyphrase_ngram_range=(1, 2), stop_words='spanish'
+    )
+    return [kw[0] for kw in palabras_clave]
 
-    # Create a chat input field to allow the user to enter a message. This will display
-    # automatically at the bottom of the page.
-    if prompt := st.chat_input("What is up?"):
+def generar_cuadro_conceptual(texto, nlp):
+    relaciones = []
+    doc = nlp(texto)
+    for token in doc:
+        if token.dep_ in ["nsubj", "dobj"]:
+            relaciones.append(f"{token.text} ({token.dep_}) -> {token.head.text}")
+    return relaciones
 
-        # Store and display the current prompt.
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        # Generate a response using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
-
-        # Stream the response to the chat using `st.write_stream`, then store it in 
-        # session state.
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+def main():
+    st.title("Asistente de Escritura Inteligente")
+    summarizer, kw_model, nlp = cargar_modelos()
+    texto_largo = st.text_area("Introduce el texto (máximo 5000 palabras)", height=300)
+    opcion = st.selectbox("Selecciona la tarea:", ["Resumen", "Palabras clave", "Cuadro conceptual"])
+    if st.button("Procesar"):
+        if opcion == "Resumen":
+            resultado = generar_resumen(texto_largo, summarizer)
+            st.subheader("Resumen")
+            st.write(resultado)
+        elif opcion == "Palabras clave":
+            resultado = extraer_palabras_clave(texto_largo, kw_model)
+            st.subheader("Palabras clave")
+            st.write(resultado)
+        elif opcion == "Cuadro conceptual":
+            resultado = generar_cuadro_conceptual(texto_largo, nlp)
+            st.subheader("Cuadro conceptual")
+            st.write(resultado)
